@@ -238,6 +238,65 @@ export default function Index() {
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
+  const handleShare = (platform: 'vk' | 'telegram' | 'whatsapp') => {
+    if (!resultCareer) return;
+    
+    const text = `Я прошёл тест "ПрофНавигатор Урала" и моя профессия — ${resultCareer.name}! Пройди тест и найди свою: ${window.location.href}`;
+    const encodedText = encodeURIComponent(text);
+    
+    const urls = {
+      vk: `https://vk.com/share.php?url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent('ПрофНавигатор Урала')}&description=${encodeURIComponent(`Моя профессия — ${resultCareer.name}!`)}`,
+      telegram: `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodedText}`,
+      whatsapp: `https://wa.me/?text=${encodedText}`
+    };
+    
+    window.open(urls[platform], '_blank', 'width=600,height=400');
+  };
+
+  const handleDownloadPDF = () => {
+    if (!resultCareer) return;
+    
+    const content = `
+ПРОФНАВИГАТОР УРАЛА
+Результаты теста
+
+=================================
+
+Ваша профессия: ${resultCareer.name}
+
+${resultCareer.description}
+
+=================================
+
+ЧТО СДАВАТЬ (ЕГЭ):
+${resultCareer.exams.map((exam, i) => `${i + 1}. ${exam}`).join('\n')}
+
+=================================
+
+КУДА ПОСТУПАТЬ:
+${resultCareer.universities.map((uni, i) => `${i + 1}. ${uni}`).join('\n')}
+
+=================================
+
+ЗАРПЛАТА НА УРАЛЕ:
+${resultCareer.salary}
+
+=================================
+
+Пройди тест на: ${window.location.href}
+    `.trim();
+    
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Результаты_ПрофНавигатор_${resultCareer.name.replace(/\s+/g, '_')}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-orange-50">
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
@@ -380,14 +439,54 @@ export default function Index() {
                 </div>
               </Card>
 
-              <div className="flex gap-4 justify-center">
-                <Button onClick={handleStartTest} size="lg" className="rounded-2xl">
-                  <Icon name="RotateCcw" className="mr-2" />
-                  Пройти ещё раз
-                </Button>
-                <Button onClick={() => setCurrentSection('home')} variant="outline" size="lg" className="rounded-2xl">
-                  На главную
-                </Button>
+              <div className="space-y-6">
+                <Card className="p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-primary/20">
+                  <h4 className="text-xl font-bold mb-4 text-center">Поделиться результатом</h4>
+                  <div className="flex gap-3 justify-center flex-wrap">
+                    <Button 
+                      onClick={() => handleShare('vk')} 
+                      variant="outline" 
+                      className="rounded-xl hover:bg-[#0077FF] hover:text-white hover:border-[#0077FF] transition-colors"
+                    >
+                      <Icon name="Share2" className="mr-2" size={18} />
+                      ВКонтакте
+                    </Button>
+                    <Button 
+                      onClick={() => handleShare('telegram')} 
+                      variant="outline" 
+                      className="rounded-xl hover:bg-[#0088cc] hover:text-white hover:border-[#0088cc] transition-colors"
+                    >
+                      <Icon name="Send" className="mr-2" size={18} />
+                      Telegram
+                    </Button>
+                    <Button 
+                      onClick={() => handleShare('whatsapp')} 
+                      variant="outline" 
+                      className="rounded-xl hover:bg-[#25D366] hover:text-white hover:border-[#25D366] transition-colors"
+                    >
+                      <Icon name="MessageCircle" className="mr-2" size={18} />
+                      WhatsApp
+                    </Button>
+                    <Button 
+                      onClick={handleDownloadPDF} 
+                      variant="outline" 
+                      className="rounded-xl hover:bg-accent hover:text-white hover:border-accent transition-colors"
+                    >
+                      <Icon name="Download" className="mr-2" size={18} />
+                      Скачать результат
+                    </Button>
+                  </div>
+                </Card>
+
+                <div className="flex gap-4 justify-center">
+                  <Button onClick={handleStartTest} size="lg" className="rounded-2xl">
+                    <Icon name="RotateCcw" className="mr-2" />
+                    Пройти ещё раз
+                  </Button>
+                  <Button onClick={() => setCurrentSection('home')} variant="outline" size="lg" className="rounded-2xl">
+                    На главную
+                  </Button>
+                </div>
               </div>
             </div>
           </section>
