@@ -201,6 +201,7 @@ export default function Index() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [resultCareer, setResultCareer] = useState<Career | null>(null);
+  const [topCareers, setTopCareers] = useState<Array<{ career: Career; score: number }>>([]);
 
   const handleStartTest = () => {
     setCurrentSection('test');
@@ -232,8 +233,13 @@ export default function Index() {
       });
     });
 
-    const topCareer = Object.entries(scores).sort(([, a], [, b]) => b - a)[0][0];
-    setResultCareer(careers[topCareer]);
+    const sortedCareers = Object.entries(scores)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([key, score]) => ({ career: careers[key], score }));
+    
+    setTopCareers(sortedCareers);
+    setResultCareer(sortedCareers[0].career);
   };
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
@@ -383,15 +389,16 @@ ${resultCareer.salary}
           </section>
         )}
 
-        {currentSection === 'results' && resultCareer && (
+        {currentSection === 'results' && resultCareer && topCareers.length > 0 && (
           <section className="container mx-auto px-4 py-20">
-            <div className="max-w-4xl mx-auto animate-fade-in">
+            <div className="max-w-5xl mx-auto animate-fade-in">
               <div className="text-center mb-12">
                 <div className="text-8xl mb-6 animate-float">🎉</div>
                 <h2 className="text-5xl font-bold mb-4">Твоя профессия:</h2>
                 <h3 className="text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
                   {resultCareer.name}
                 </h3>
+                <p className="text-gray-500 mt-4 text-lg">Совпадение: {Math.round((topCareers[0].score / 30) * 100)}%</p>
               </div>
 
               <Card className="p-10 rounded-3xl shadow-2xl mb-8 bg-white/80 backdrop-blur border-2 border-primary/20">
@@ -438,6 +445,40 @@ ${resultCareer.salary}
                   <p className="text-3xl font-bold text-accent">{resultCareer.salary}</p>
                 </div>
               </Card>
+
+              {topCareers.length > 1 && (
+                <div className="mb-8">
+                  <h3 className="text-3xl font-bold mb-6 text-center">Другие подходящие профессии</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {topCareers.slice(1).map((item, index) => (
+                      <Card key={index} className="p-6 rounded-2xl bg-white/60 backdrop-blur hover:shadow-xl transition-all border-2 hover:border-primary/30">
+                        <div className="flex justify-between items-start mb-4">
+                          <h4 className="text-2xl font-bold text-primary">{item.career.name}</h4>
+                          <span className="text-sm bg-primary/10 text-primary px-3 py-1 rounded-full font-semibold">
+                            {Math.round((item.score / 30) * 100)}%
+                          </span>
+                        </div>
+                        <p className="text-gray-700 mb-4">{item.career.description}</p>
+                        
+                        <div className="space-y-3">
+                          <div>
+                            <p className="font-semibold text-sm text-gray-600 mb-1">ЕГЭ:</p>
+                            <p className="text-sm">{item.career.exams.join(', ')}</p>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm text-gray-600 mb-1">Вузы:</p>
+                            <p className="text-sm">{item.career.universities.slice(0, 2).join(', ')}</p>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm text-gray-600 mb-1">Зарплата:</p>
+                            <p className="text-sm font-bold text-accent">{item.career.salary}</p>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-6">
                 <Card className="p-6 rounded-2xl bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-primary/20">
